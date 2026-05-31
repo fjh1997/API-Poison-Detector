@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.log
+*.hta
+*.vbs
+*.ps1
+pwned.txt
+transparency_log.jsonl
+.claude/

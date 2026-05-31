@@ -1,0 +1,25 @@
+{
+  "detector": {
+    "listen_host": "127.0.0.1",
+    "listen_port": 8080,
+    "upstream_url": "http://127.0.0.1:9090",
+    "upstream_key": "sk-poisoned-victim-key-67890",
+    "generated_url": "http://127.0.0.1:8080",
+    "generated_key": "sk-detector-safe-key-123456",
+    "model": "mimo-v2.5-pro"
+  },
+  "alert": {
+    "block_on_critical": true,
+    "alert_webhook": "",
+    "alert_sound": true,
+    "log_file": "detection_alerts.log"
+  },
+  "detection": {
+    "check_system_prompt": true,
+    "check_tool_calls": true,
+    "check_response_content": true,
+    "check_hidden_instructions": true,
+    "check_base64_encoding": true,
+    "check_unicode_obfuscation": true
+  }
+}
