@@ -376,7 +376,6 @@ poison/
 |   +-- detector_config.json     # 检测程序配置 / Detector config
 |
 +-- scripts/                     # 工具脚本 / Utility scripts
-|   +-- start_monitor.bat        # Windows 启动脚本 / Windows startup script
 |   +-- test_helpers.py          # 共享测试辅助函数 / Shared test helpers
 |   +-- poison_demo.py           # 投毒攻击演示 / Poisoning attack demo
 |   +-- cli.py                   # CLI 工具 / CLI tool
