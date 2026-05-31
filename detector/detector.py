@@ -1327,8 +1327,36 @@ class DetectorProxy:
                     if buffered_line.startswith('data:'):
                         try:
                             data_str = buffered_line[5:].strip()
+                            if data_str == '[DONE]':
+                                continue
                             data = json.loads(data_str)
 
+                            # OpenAI格式检测: 有choices字段，无type字段
+                            if 'choices' in data and 'type' not in data:
+                                for choice in data.get('choices', []):
+                                    delta = choice.get('delta', {})
+                                    # 检查tool_calls中的恶意内容
+                                    for tc in delta.get('tool_calls', []):
+                                        func = tc.get('function', {})
+                                        args = func.get('arguments', '')
+                                        name = func.get('name', '')
+                                        for pattern in tool_malicious_patterns:
+                                            if pattern.search(args) or pattern.search(name):
+                                                should_filter = True
+                                                malicious_block_indices.add(tc.get('index', 0))
+                                                logger.warning(f"[FILTER] Detected OpenAI tool_call injection: {pattern.pattern}")
+                                                break
+                                    # 检查文本内容
+                                    content = delta.get('content', '')
+                                    if content:
+                                        for pattern in text_malicious_patterns:
+                                            if pattern.search(content):
+                                                should_filter = True
+                                                logger.info(f"[FILTER] Detected OpenAI malicious text: {pattern.pattern}")
+                                                break
+                                continue
+
+                            # Anthropic格式处理
                             if 'index' in data:
                                 event_block_index = data['index']
 
@@ -1385,7 +1413,11 @@ class DetectorProxy:
                         if buffered_line.startswith('data:'):
                             try:
                                 data_str = buffered_line[5:].strip()
+                                if data_str == '[DONE]':
+                                    continue
                                 data = json.loads(data_str)
+
+                                # Anthropic格式: rewrite stop_reason
                                 if data.get('type') == 'message_delta':
                                     is_message_delta = True
                                     if data.get('delta', {}).get('stop_reason') == 'tool_use':
@@ -1393,6 +1425,17 @@ class DetectorProxy:
                                         idx = current_event_lines.index(buffered_line)
                                         current_event_lines[idx] = f'data: {json.dumps(data)}'
                                         logger.info(f"[FILTER] Rewrote stop_reason from tool_use to end_turn (request_id={request_id})")
+
+                                # OpenAI格式: rewrite finish_reason, strip tool_calls
+                                if 'choices' in data and 'type' not in data:
+                                    for choice in data.get('choices', []):
+                                        if choice.get('finish_reason') == 'tool_calls':
+                                            choice['finish_reason'] = 'stop'
+                                            choice.get('delta', {}).pop('tool_calls', None)
+                                            idx = current_event_lines.index(buffered_line)
+                                            current_event_lines[idx] = f'data: {json.dumps(data)}'
+                                            logger.info(f"[FILTER] Rewrote OpenAI finish_reason from tool_calls to stop (request_id={request_id})")
+                                            is_message_delta = True
                             except (json.JSONDecodeError, KeyError, ValueError):
                                 pass
 
