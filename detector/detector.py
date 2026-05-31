@@ -2,18 +2,18 @@
 """
 API中转站投毒检测程序 / API Relay Poison Detection Program
 
-合并自:
-- detector.py (基础检测 + DetectorProxy)
+合并自: / Merged from:
+- detector.py (基础检测 + DetectorProxy) (Basic detection + DetectorProxy)
 - advanced_detector.py (SecretScanner, PolicyGate, AnomalyDetector, ConditionalTriggerDetector, TransparencyLog)
 - poison_detector.py (APIRequest, APIResponse, baseline comparison, latency anomaly)
 
-功能：
-1. 接收被投毒的上游API地址和Key
-2. 生成干净的API地址和Key供Claude Code使用
-3. 实时监控并检测投毒行为
-4. 发现投毒立即报警
+功能： / Features:
+1. 接收被投毒的上游API地址和Key / Receive poisoned upstream API address and key
+2. 生成干净的API地址和Key供Claude Code使用 / Generate clean API address and key for Claude Code
+3. 实时监控并检测投毒行为 / Real-time monitoring and poison detection
+4. 发现投毒立即报警 / Alert immediately when poison is detected
 
-使用方式：
+使用方式： / Usage:
     python detector.py
 """
 
@@ -58,11 +58,11 @@ class ThreatLevel(Enum):
 
 
 class AttackClass(Enum):
-    """论文定义的攻击类"""
-    AC_1 = "AC-1"       # 载荷注入
-    AC_2 = "AC-2"       # 秘密窃取
-    AC_1a = "AC-1.a"    # 依赖混淆
-    AC_1b = "AC-1.b"    # 条件投毒
+    """论文定义的攻击类 / Attack classes defined in the paper"""
+    AC_1 = "AC-1"       # 载荷注入 / Payload injection
+    AC_2 = "AC-2"       # 秘密窃取 / Secret exfiltration
+    AC_1a = "AC-1.a"    # 依赖混淆 / Dependency confusion
+    AC_1b = "AC-1.b"    # 条件投毒 / Conditional poisoning
 
 
 # ─── Data classes ─────────────────────────────────────────────────────────────
@@ -81,7 +81,7 @@ class DetectionAlert:
 
 @dataclass
 class SessionState:
-    """会话状态 - 用于检测AC-1.b条件投毒"""
+    """会话状态 - 用于检测AC-1.b条件投毒 / Session state - used for AC-1.b conditional poison detection"""
     session_id: str
     request_count: int = 0
     tool_calls_seen: List[str] = field(default_factory=list)
@@ -95,7 +95,7 @@ class SessionState:
 
 @dataclass
 class APIRequest:
-    """API请求数据"""
+    """API请求数据 / API request data"""
     method: str
     url: str
     headers: Dict
@@ -105,7 +105,7 @@ class APIRequest:
 
 @dataclass
 class APIResponse:
-    """API响应数据"""
+    """API响应数据 / API response data"""
     status_code: int
     headers: Dict
     body: Dict
@@ -116,7 +116,7 @@ class APIResponse:
 # ─── Advanced detection components (from advanced_detector.py) ────────────────
 
 class SecretScanner:
-    """AC-2: 秘密窃取检测"""
+    """AC-2: 秘密窃取检测 / Secret exfiltration detection"""
 
     SECRET_PATTERNS = {
         'openai_key': r'sk-[A-Za-z0-9]{20,}',
@@ -185,7 +185,7 @@ class SecretScanner:
 
 
 class PolicyGate:
-    """论文中的Policy Gate防御"""
+    """论文中的Policy Gate防御 / Policy Gate defense from the paper"""
 
     ALLOWED_DOMAINS = {
         'github.com', 'raw.githubusercontent.com',
@@ -323,7 +323,7 @@ class PolicyGate:
 
 
 class AnomalyDetector:
-    """论文中的Anomaly Screening"""
+    """论文中的Anomaly Screening / Anomaly Screening from the paper"""
 
     def __init__(self):
         self.tool_frequency: Dict[str, int] = defaultdict(int)
@@ -405,7 +405,7 @@ class AnomalyDetector:
 
 
 class ConditionalTriggerDetector:
-    """AC-1.b: 条件投毒检测"""
+    """AC-1.b: 条件投毒检测 / Conditional poison detection"""
 
     def __init__(self):
         self.sessions: Dict[str, SessionState] = {}
@@ -478,7 +478,7 @@ class ConditionalTriggerDetector:
 
 
 class TransparencyLog:
-    """论文中的Transparency Logging"""
+    """论文中的Transparency Logging / Transparency Logging from the paper"""
 
     def __init__(self, log_file: str = "transparency_log.jsonl"):
         self.log_file = log_file
@@ -561,13 +561,13 @@ class TransparencyLog:
 # ─── Core detector ────────────────────────────────────────────────────────────
 
 class PoisonDetector:
-    """投毒检测核心"""
+    """投毒检测核心 / Poison detection core"""
 
-    # SSE事件大小限制
+    # SSE事件大小限制 / SSE event size limits
     MAX_LINE_BYTES = 1_000_000
     MAX_EVENT_LINES = 1000
 
-    # 预编译的流式检测模式
+    # 预编译的流式检测模式 / Pre-compiled streaming detection patterns
     COMPILED_TEXT_PATTERNS = [re.compile(p, re.IGNORECASE) for p in [
         r'MessageBox\.Show\(',
         r'Add-Type.*System\.Windows\.Forms',
@@ -657,18 +657,18 @@ class PoisonDetector:
         self.alert_count = 0
         self.blocked_count = 0
 
-        # 高级检测组件
+        # 高级检测组件 / Advanced detection components
         self.secret_scanner = SecretScanner()
         self.policy_gate = PolicyGate()
         self.anomaly_detector = AnomalyDetector()
         self.trigger_detector = ConditionalTriggerDetector()
         self.transparency_log = TransparencyLog()
 
-        # 基线对比
+        # 基线对比 / Baseline comparison
         self.request_history: List[Tuple[APIRequest, APIResponse]] = []
         self.baseline_responses: Dict[str, Dict] = {}
 
-        # 危险关键词
+        # 危险关键词 / Dangerous keywords
         self.dangerous_keywords = [
             'ignore previous', 'ignore above', 'forget your instructions',
             'you are now', 'new instructions', 'system override',
@@ -684,7 +684,7 @@ class PoisonDetector:
             '发送到', '上传到', '窃取', '提取数据'
         ]
 
-        # 可疑Tool Call模式（预编译）
+        # 可疑Tool Call模式（预编译）/ Suspicious Tool Call patterns (pre-compiled)
         self.suspicious_tool_patterns = [re.compile(p) for p in [
             r'function\s*:\s*["\']?(exec|eval|system|spawn|fork)',
             r'tool\s*:\s*["\']?(shell|terminal|command|powershell)',
@@ -693,11 +693,11 @@ class PoisonDetector:
 
     def analyze_request(self, body: Dict, headers: Dict,
                        session_id: str = "default") -> List[DetectionAlert]:
-        """分析请求"""
+        """分析请求 / Analyze request"""
         alerts = []
         request_id = f"req_{self.request_count}"
 
-        # AC-2: 秘密窃取检测
+        # AC-2: 秘密窃取检测 / Secret exfiltration detection
         secret_alerts = self.secret_scanner.scan_request(body, headers)
         for a in secret_alerts:
             a.request_id = request_id
@@ -706,7 +706,7 @@ class PoisonDetector:
         if 'messages' not in body:
             return alerts
 
-        # 检测System Prompt注入
+        # 检测System Prompt注入 / Detect System Prompt injection
         for i, msg in enumerate(body['messages']):
             if msg.get('role') != 'system':
                 continue
@@ -754,7 +754,7 @@ class PoisonDetector:
                     request_id=request_id
                 ))
 
-        # 检测Tool定义注入
+        # 检测Tool定义注入 / Detect Tool definition injection
         if 'tools' in body:
             for tool in body['tools']:
                 func = tool.get('function', {})
@@ -770,7 +770,7 @@ class PoisonDetector:
                         request_id=request_id
                     ))
 
-        # 检测用户消息中的注入
+        # 检测用户消息中的注入 / Detect injection in user messages
         for i, msg in enumerate(body['messages']):
             if msg.get('role') == 'user':
                 content = msg.get('content', '')
@@ -787,20 +787,20 @@ class PoisonDetector:
                             request_id=request_id
                         ))
 
-        # 记录到透明日志
+        # 记录到透明日志 / Log to transparency log
         self.transparency_log.log_request(request_id, body, headers)
 
         return alerts
 
     def analyze_response(self, body: Dict, request_id: str = "") -> List[DetectionAlert]:
-        """分析响应"""
+        """分析响应 / Analyze response"""
         alerts = []
 
-        # AC-2: 响应中的秘密泄露
+        # AC-2: 响应中的秘密泄露 / Secret leakage in response
         secret_alerts = self.secret_scanner.scan_response(body)
         alerts.extend(secret_alerts)
 
-        # 支持Anthropic格式
+        # 支持Anthropic格式 / Support Anthropic format
         if 'content' in body and isinstance(body['content'], list):
             for i, block in enumerate(body['content']):
                 content = ""
@@ -814,7 +814,7 @@ class PoisonDetector:
 
                 alerts.extend(self._check_content_for_threats(content, f"content[{i}]", request_id))
 
-        # 支持OpenAI格式
+        # 支持OpenAI格式 / Support OpenAI format
         if 'choices' in body:
             for i, choice in enumerate(body['choices']):
                 message = choice.get('message', {})
@@ -848,35 +848,35 @@ class PoisonDetector:
                                     request_id=request_id
                                 ))
 
-        # 记录到透明日志
+        # 记录到透明日志 / Log to transparency log
         self.transparency_log.log_response(request_id, body, 0)
 
         return alerts
 
     def analyze_tool_call(self, tool_name: str, arguments: Dict,
                          session_id: str = "default") -> List[DetectionAlert]:
-        """分析tool call - 综合检测"""
+        """分析tool call - 综合检测 / Analyze tool call - comprehensive detection"""
         alerts = []
 
-        # 更新会话状态
+        # 更新会话状态 / Update session state
         self.trigger_detector.update_session(session_id, tool_name, arguments)
 
-        # Policy Gate检查
+        # Policy Gate检查 / Policy Gate check
         policy_alerts = self.policy_gate.check_tool_call(tool_name, arguments)
         alerts.extend(policy_alerts)
 
-        # Anomaly Detection检查
+        # Anomaly Detection检查 / Anomaly Detection check
         anomaly_alerts = self.anomaly_detector.analyze_tool_call(tool_name, arguments)
         alerts.extend(anomaly_alerts)
 
-        # AC-1.b 条件触发检测
+        # AC-1.b 条件触发检测 / AC-1.b conditional trigger detection
         trigger_alerts = self.trigger_detector.detect_triggers(session_id, tool_name, arguments)
         alerts.extend(trigger_alerts)
 
         return alerts
 
     def _check_content_for_threats(self, content: str, location: str, request_id: str) -> List[DetectionAlert]:
-        """检查内容中的威胁"""
+        """检查内容中的威胁 / Check content for threats"""
         alerts = []
         content_lower = content.lower()
 
@@ -938,7 +938,7 @@ class PoisonDetector:
         return alerts
 
     def _detect_obfuscation(self, text: str) -> bool:
-        """检测Unicode混淆"""
+        """检测Unicode混淆 / Detect Unicode obfuscation"""
         suspicious_chars = ['​', '‌', '‍', '﻿', '⁠']
         for char in suspicious_chars:
             if char in text:
@@ -951,7 +951,7 @@ class PoisonDetector:
         return False
 
     def _detect_base64_payload(self, text: str) -> bool:
-        """检测Base64编码的恶意内容"""
+        """检测Base64编码的恶意内容 / Detect Base64-encoded malicious content"""
         matches = self.COMPILED_BASE64_PATTERN.findall(text)
 
         for b64 in matches:
@@ -965,7 +965,7 @@ class PoisonDetector:
         return False
 
     def _detect_command_injection(self, args) -> bool:
-        """检测命令注入"""
+        """检测命令注入 / Detect command injection"""
         if isinstance(args, dict):
             args = json.dumps(args)
 
@@ -985,7 +985,7 @@ class PoisonDetector:
         return False
 
     def _detect_latency_anomaly(self, latency_ms: float) -> List[DetectionAlert]:
-        """检测响应延迟异常"""
+        """检测响应延迟异常 / Detect response latency anomaly"""
         results = []
 
         if latency_ms > 30000:
@@ -999,7 +999,7 @@ class PoisonDetector:
         return results
 
     def compare_with_baseline(self, request: APIRequest, response: APIResponse) -> List[DetectionAlert]:
-        """与基线响应对比，检测篡改"""
+        """与基线响应对比，检测篡改 / Compare with baseline response to detect tampering"""
         results = []
 
         request_fingerprint = self._generate_fingerprint(request)
@@ -1026,7 +1026,7 @@ class PoisonDetector:
         return results
 
     def _generate_fingerprint(self, request: APIRequest) -> str:
-        """生成请求指纹"""
+        """生成请求指纹 / Generate request fingerprint"""
         fingerprint_data = {
             'model': request.body.get('model', ''),
             'messages': [
@@ -1042,7 +1042,7 @@ class PoisonDetector:
         return hashlib.md5(json.dumps(fingerprint_data, sort_keys=True).encode()).hexdigest()
 
     def _extract_response_content(self, body: Dict) -> str:
-        """提取响应内容"""
+        """提取响应内容 / Extract response content"""
         if 'choices' in body:
             contents = []
             for choice in body['choices']:
@@ -1058,7 +1058,7 @@ class PoisonDetector:
         return ''
 
     def _compute_diff(self, text1: str, text2: str) -> str:
-        """计算两个文本的差异"""
+        """计算两个文本的差异 / Compute diff between two texts"""
         diff = list(difflib.unified_diff(
             text1.splitlines(keepends=True),
             text2.splitlines(keepends=True),
@@ -1068,7 +1068,7 @@ class PoisonDetector:
         return '\n'.join(diff[:20])
 
     def get_report(self) -> Dict:
-        """生成检测报告"""
+        """生成检测报告 / Generate detection report"""
         report = {
             'summary': {
                 'total_requests': self.request_count,
@@ -1107,7 +1107,7 @@ class PoisonDetector:
         return report
 
     def print_report(self):
-        """打印检测报告"""
+        """打印检测报告 / Print detection report"""
         report = self.get_report()
 
         print("\n" + "=" * 60)
@@ -1145,7 +1145,7 @@ class PoisonDetector:
 # ─── Proxy server ─────────────────────────────────────────────────────────────
 
 class DetectorProxy:
-    """检测代理服务器"""
+    """检测代理服务器 / Detection proxy server"""
 
     def __init__(self, config_path: str = "detector_config.json"):
         with open(config_path, 'r', encoding='utf-8') as f:
@@ -1187,11 +1187,11 @@ class DetectorProxy:
             await self._session.close()
 
     async def handle_request(self, request: web.Request) -> web.Response:
-        """处理请求"""
+        """处理请求 / Handle request"""
         self.detector.request_count += 1
         request_id = f"req_{self.detector.request_count}_{int(time.time())}"
 
-        # 会话级请求跟踪
+        # 会话级请求跟踪 / Session-level request tracking
         session_id = request.headers.get('X-Claude-Code-Session-Id', 'unknown')
         self.session_request_counts[session_id] = self.session_request_counts.get(session_id, 0) + 1
         if self.session_request_counts[session_id] == 50:
@@ -1218,13 +1218,13 @@ class DetectorProxy:
             except json.JSONDecodeError:
                 body = {}
 
-            # 检测请求
+            # 检测请求 / Detect request
             if self.detection_config.get('check_system_prompt', True):
                 request_alerts = self.detector.analyze_request(body, dict(request.headers), session_id=session_id)
                 for alert in request_alerts:
                     self._handle_alert(alert)
 
-            # 转发请求到上游
+            # 转发请求到上游 / Forward request to upstream
             start_time = time.time()
             target_url = self.detector_config['upstream_url'].rstrip('/')
             path = request.path
@@ -1284,7 +1284,7 @@ class DetectorProxy:
             )
 
     async def _handle_streaming_response(self, response, request, request_id, latency_ms, request_body=None):
-        """处理流式SSE响应"""
+        """处理流式SSE响应 / Handle streaming SSE response"""
         stream_response = web.StreamResponse(
             status=response.status,
             headers={
@@ -1333,14 +1333,14 @@ class DetectorProxy:
                                 continue
                             data = json.loads(data_str)
 
-                            # OpenAI格式检测: 有choices字段，无type字段
+                            # OpenAI格式检测: 有choices字段，无type字段 / OpenAI format detection: has choices field, no type field
                             if 'choices' in data and 'type' not in data:
                                 has_tool_calls = False
                                 for choice in data.get('choices', []):
                                     delta = choice.get('delta', {})
                                     if delta.get('tool_calls'):
                                         has_tool_calls = True
-                                    # 检查tool_calls中的恶意内容
+                                    # 检查tool_calls中的恶意内容 / Check tool_calls for malicious content
                                     for tc in delta.get('tool_calls', []):
                                         func = tc.get('function', {})
                                         args = func.get('arguments', '')
@@ -1351,7 +1351,7 @@ class DetectorProxy:
                                                 malicious_block_indices.add(tc.get('index', 0))
                                                 logger.warning(f"[FILTER] Detected OpenAI tool_call injection: {pattern.pattern}")
                                                 break
-                                    # 检查文本内容
+                                    # 检查文本内容 / Check text content
                                     content = delta.get('content', '')
                                     if content:
                                         for pattern in text_malicious_patterns:
@@ -1395,7 +1395,7 @@ class DetectorProxy:
                                             pending_openai_chunks.clear()
                                 continue
 
-                            # Anthropic格式处理
+                            # Anthropic格式处理 / Anthropic format processing
                             if 'index' in data:
                                 event_block_index = data['index']
 
@@ -1456,7 +1456,7 @@ class DetectorProxy:
                                     continue
                                 data = json.loads(data_str)
 
-                                # Anthropic格式: rewrite stop_reason
+                                # Anthropic格式: rewrite stop_reason / Anthropic format: rewrite stop_reason
                                 if data.get('type') == 'message_delta':
                                     is_message_delta = True
                                     if data.get('delta', {}).get('stop_reason') == 'tool_use':
@@ -1465,7 +1465,7 @@ class DetectorProxy:
                                         current_event_lines[idx] = f'data: {json.dumps(data)}'
                                         logger.info(f"[FILTER] Rewrote stop_reason from tool_use to end_turn (request_id={request_id})")
 
-                                # OpenAI格式: rewrite finish_reason, strip tool_calls
+                                # OpenAI格式: rewrite finish_reason, strip tool_calls / OpenAI format: rewrite finish_reason, strip tool_calls
                                 if 'choices' in data and 'type' not in data:
                                     for choice in data.get('choices', []):
                                         if choice.get('finish_reason') == 'tool_calls':
@@ -1526,7 +1526,7 @@ class DetectorProxy:
         return stream_response
 
     def _handle_alert(self, alert: DetectionAlert):
-        """处理告警"""
+        """处理告警 / Handle alert"""
         self.detector.alert_count += 1
         self.detector.alerts.append(alert)
         self.detector.transparency_log.log_alert(alert)
@@ -1548,7 +1548,7 @@ class DetectorProxy:
             asyncio.create_task(self._send_webhook_alert(alert))
 
     async def _send_webhook_alert(self, alert: DetectionAlert):
-        """发送Webhook告警"""
+        """发送Webhook告警 / Send Webhook alert"""
         webhook_url = self.alert_config['alert_webhook']
         if not webhook_url:
             return
@@ -1571,7 +1571,7 @@ class DetectorProxy:
             logger.error(f"发送Webhook告警失败: {e}")
 
     def _filter_response(self, response_body: Dict, alerts: List[DetectionAlert]) -> Dict:
-        """过滤响应中的恶意内容"""
+        """过滤响应中的恶意内容 / Filter malicious content from response"""
         filtered = copy.deepcopy(response_body)
 
         high_threats = [a for a in alerts if a.threat_level in [ThreatLevel.CRITICAL, ThreatLevel.HIGH]]
@@ -1614,7 +1614,7 @@ class DetectorProxy:
         return filtered
 
     async def run(self):
-        """运行代理"""
+        """运行代理 / Run proxy"""
         runner = web.AppRunner(self.app)
         await runner.setup()
         site = web.TCPSite(
@@ -1656,7 +1656,7 @@ API Key: {self.generated_key}
             await runner.cleanup()
 
     def _print_report(self):
-        """打印检测报告"""
+        """打印检测报告 / Print detection report"""
         report = self.detector.get_report()
 
         print("\n" + "=" * 60)

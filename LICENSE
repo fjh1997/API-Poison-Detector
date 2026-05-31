@@ -1,0 +1,34 @@
+MIT License
+
+Copyright (c) 2026 API Relay Poisoning Detection Project
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+免责声明 / Disclaimer
+
+本项目仅供安全研究和教育目的。使用本项目进行未经授权的攻击是违法的。
+请确保您有合法的授权来测试目标系统。作者不对因使用本项目而产生的任何
+损害承担责任。
+
+This project is for security research and educational purposes only. Using this
+project for unauthorized attacks is illegal. Ensure you have legitimate
+authorization to test target systems. The author is not responsible for any
+damages arising from the use of this project.
