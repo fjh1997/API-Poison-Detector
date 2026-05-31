@@ -2,8 +2,8 @@
   "poisoner": {
     "listen_host": "0.0.0.0",
     "listen_port": 9090,
-    "upstream_url": "https://token-plan-cn.xiaomimimo.com/anthropic",
-    "upstream_key": "tp-cc0xb63ob9y40blysm4j4da5r79s5gsothx9v8fftwmuekz4",
+    "upstream_url": "https://your-api-relay.com",
+    "upstream_key": "sk-your-upstream-api-key",
     "generated_url": "http://127.0.0.1:9090",
     "generated_key": "sk-poisoned-victim-key-67890",
     "model": "mimo-v2.5-pro"

@@ -582,6 +582,7 @@ class PoisonDetector:
         r'MessageBox\.Show\(',
         r'Add-Type.*System\.Windows\.Forms',
         r'powershell.*-Command',
+        r'-EncodedCommand',
         r'YOUR COMPUTER HAS BEEN COMPROMISED',
         r'curl.*https?://.*\s.*-d\s',
         r'rm\s+-rf\s+/',
@@ -1302,6 +1303,7 @@ class DetectorProxy:
         pending_start_events = {}
         block_types = {}
         requested_model = request_body.get('model', '') if request_body else ''
+        pending_openai_chunks = []  # Buffer for OpenAI tool_call chunks
 
         async for line in response.content:
             if len(line) > self.detector.MAX_LINE_BYTES:
@@ -1333,8 +1335,11 @@ class DetectorProxy:
 
                             # OpenAI格式检测: 有choices字段，无type字段
                             if 'choices' in data and 'type' not in data:
+                                has_tool_calls = False
                                 for choice in data.get('choices', []):
                                     delta = choice.get('delta', {})
+                                    if delta.get('tool_calls'):
+                                        has_tool_calls = True
                                     # 检查tool_calls中的恶意内容
                                     for tc in delta.get('tool_calls', []):
                                         func = tc.get('function', {})
@@ -1354,6 +1359,40 @@ class DetectorProxy:
                                                 should_filter = True
                                                 logger.info(f"[FILTER] Detected OpenAI malicious text: {pattern.pattern}")
                                                 break
+
+                                # Buffer tool_call chunks for deferred output
+                                if has_tool_calls and not should_filter:
+                                    pending_openai_chunks.append((current_event_lines[:], data))
+                                    current_event_lines = []
+                                    continue
+                                elif has_tool_calls and should_filter:
+                                    # Malicious: discard all buffered tool_call chunks
+                                    logger.warning(f"[FILTER] Blocked OpenAI tool_call stream (request_id={request_id})")
+                                    pending_openai_chunks.clear()
+                                    current_event_lines = []
+                                    continue
+                                else:
+                                    # Non-tool_call OpenAI chunk (e.g. finish_reason)
+                                    if should_filter:
+                                        # Malicious was detected: discard buffer, rewrite finish_reason
+                                        pending_openai_chunks.clear()
+                                        for choice in data.get('choices', []):
+                                            if choice.get('finish_reason') == 'tool_calls':
+                                                choice['finish_reason'] = 'stop'
+                                                choice.get('delta', {}).pop('tool_calls', None)
+                                                rewritten_line = f'data: {json.dumps(data)}'
+                                                await stream_response.write(rewritten_line.encode())
+                                                await stream_response.write(b'\n\n')
+                                                logger.info(f"[FILTER] Rewrote OpenAI finish_reason from tool_calls to stop (request_id={request_id})")
+                                        continue
+                                    else:
+                                        # Clean: emit buffered chunks
+                                        if pending_openai_chunks:
+                                            for chunk_lines, _ in pending_openai_chunks:
+                                                for cl in chunk_lines:
+                                                    await stream_response.write(cl.encode())
+                                                await stream_response.write(b'\n')
+                                            pending_openai_chunks.clear()
                                 continue
 
                             # Anthropic格式处理
