@@ -369,7 +369,6 @@ poison/
 +-- poisoner/                    # 投毒程序（攻击者端） / Poisoner (attacker side)
 |   +-- poisoner.py              # 核心：SSE tool_use 注入（Anthropic + OpenAI）
 |   +-- poisoner_config.json     # 投毒程序配置 / Poisoner config
-|   +-- config.json              # 通用配置 / General config
 |
 +-- detector/                    # 检测程序（受害者端） / Detector (victim side)
 |   +-- detector.py              # 核心：DetectorProxy、SecretScanner、PolicyGate
