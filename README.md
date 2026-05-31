@@ -375,11 +375,6 @@ poison/
 |   +-- detector.py              # 核心：DetectorProxy、SecretScanner、PolicyGate
 |   +-- detector_config.json     # 检测程序配置 / Detector config
 |
-+-- scripts/                     # 工具脚本 / Utility scripts
-|   +-- test_helpers.py          # 共享测试辅助函数 / Shared test helpers
-|   +-- poison_demo.py           # 投毒攻击演示 / Poisoning attack demo
-|   +-- cli.py                   # CLI 工具 / CLI tool
-|
 +-- tests/                       # 单元测试（47 项） / Unit tests (47 items)
 +-- logs/                        # 检测告警日志 / Detection alert logs
 +-- README.md
