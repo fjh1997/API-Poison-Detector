@@ -1,6 +1,6 @@
 <div align="center">
 
-# API 中转站投毒检测系统 / API Relay Poisoning Detection System
+# API 中转站投毒检测系统 / API Relay Station Poisoning Detection System
 
 <p>实时检测和防御 AI API 中转站的投毒攻击，保护你的 <code>Claude Code</code> / <code>Codex CLI</code> 安全。</p>
 <p>Real-time detection and defense against AI API relay poisoning attacks, protecting your <code>Claude Code</code> / <code>Codex CLI</code>.</p>
